@@ -666,12 +666,16 @@ namespace Boleto2Net
 
 
         #region CNAB400
-        public void LerHeaderRetornoCNAB400(string registro)
+        
+        public void LerHeaderRetornoCNAB400(ArquivoRetorno arquivoRetorno, string registro)
         {
             try
             {
                 if (registro.Substring(0, 9) != "02RETORNO")
                     throw new Exception("O arquivo não é do tipo \"02RETORNO\"");
+
+                //095 a 100 Data da Gravação do Arquivo 006 DDMMAA
+                arquivoRetorno.DataGeracao = Utils.ToDateTime(Utils.ToInt32(registro.Substring(94, 6)).ToString("##-##-##"));
             }
             catch (Exception ex)
             {
@@ -839,24 +843,8 @@ namespace Boleto2Net
                 reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0148, 002, 0, AjustaEspecieCnab400(boleto.EspecieDocumento), '0');
                 reg.Adicionar(TTiposDadoEDI.ediAlphaAliEsquerda_____, 0150, 001, 0, boleto.Aceite, ' ');
                 reg.Adicionar(TTiposDadoEDI.ediDataDDMMAA___________, 0151, 006, 0, boleto.DataEmissao, ' ');
-
-                //Instruções de protesto
-                string vInstrucao1 = "";
-                string vInstrucao2 = "";
-                switch (boleto.CodigoProtesto)
-                {
-                    case TipoCodigoProtesto.NaoProtestar:
-                        vInstrucao1 = "00";
-                        vInstrucao2 = "0";
-                        break;
-                    case TipoCodigoProtesto.ProtestarDiasCorridos:
-                        vInstrucao1 = "06";
-                        vInstrucao2 = boleto.DiasProtesto.ToString();
-                        break;
-                }
-                reg.Adicionar(TTiposDadoEDI.ediInteiro______________, 0157, 002, 0, vInstrucao1, '0');                                           //157-158
-                reg.Adicionar(TTiposDadoEDI.ediInteiro______________, 0159, 002, 0, vInstrucao2, '0');                                           //159-160
-
+                reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0157, 002, 0, boleto.CodigoInstrucao1, '0');
+                reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0159, 002, 0, boleto.CodigoInstrucao2, '0');
                 reg.Adicionar(TTiposDadoEDI.ediNumericoSemSeparador_, 0161, 013, 2, boleto.ValorJurosDia, '0');
 
                 if (boleto.ValorDesconto == 0)
